@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>八卦翻牌游戏</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            overflow: hidden;
+            font-family: '隶书', cursive;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card {
+            width: 150px;
+            height: 250px;
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card-front {
+            background: #2c3e50;
+            color: #FFD700;
+        }
+
+        .card-back {
+            background: #e74c3c;
+            color: white;
+            transform: rotateY(180deg);
+            font-family: '楷体', cursive;
+            font-size: 2em;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+        }
+
+        .gua-symbol {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        /* 烟花效果 */
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: transparent;
+            animation: explode 5s ease-out;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(20); opacity: 0; }
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="cards-container"></div>
+
+    <script>
+        const names = ["张馨月","郜一睿","陈奕然","耿梦涵","舒丹乂","周怡辰","张哲铭","袁琳","郑雨蒙","范佳琳","刘宇彤","李森昊","张涵","侯弼元","郑载蓉","王延钰","于洪锦","师小梅","田欣洢","朱志豪","高明蕊","张诗宜","高涵蕾","许惠彭","张凯","贾心悦","王颢伊","何洁","牛竹君","宋莹煊","张益铭","高旭坤","赵玮馨","赵梓含","李宜珊","陈孜慧","马艺瑄","崔建鑫","崔竞文","张沐涵","燕飞宇","吴忆涵","蔡筱鸽","李佳轩","李秉轩","张梦溪","王思懿","孙千惠","吴利阳","张迅嘉","李祉萱","张子扬","齐凌云","刘宁晨","常心慈"];
+
+        const guas = [
+            {symbol: "☰", name: "乾"}, {symbol: "☱", name: "兑"},
+            {symbol: "☲", name: "离"}, {symbol: "☳", name: "震"},
+            {symbol: "☴", name: "巽"}, {symbol: "☵", name: "坎"},
+            {symbol: "☶", name: "艮"}, {symbol: "☷", name: "坤"}
+        ];
+
+        function createFirework(x, y) {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+            firework.style.background = `radial-gradient(circle, 
+                hsl(${Math.random()*360}, 100%, 50%),
+                hsl(${Math.random()*360}, 100%, 50%),
+                transparent 70%)`;
+            document.body.appendChild(firework);
+            setTimeout(() => firework.remove(), 5000);
+        }
+
+        function createCard() {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            const gua = guas.splice(Math.floor(Math.random()*guas.length), 1)[0];
+            
+            card.innerHTML = `
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="gua-symbol">${gua.symbol}</div>
+                        <div>${gua.name}</div>
+                    </div>
+                    <div class="card-back"></div>
+                </div>
+            `;
+
+            card.addEventListener('click', function() {
+                if (this.classList.contains('flipped')) return;
+                
+                this.classList.add('flipped');
+                const rect = this.getBoundingClientRect();
+                createFirework(rect.left + rect.width/2, rect.top + rect.height/2);
+                
+                const back = this.querySelector('.card-back');
+                back.textContent = names[Math.floor(Math.random()*names.length)];
+                
+                setTimeout(() => {
+                    this.classList.remove('flipped');
+                    guas.push(gua);
+                }, 15000);
+            });
+
+            return card;
+        }
+
+        // 初始化游戏
+        function initGame() {
+            const container = document.querySelector('.cards-container');
+            while (guas.length > 0) {
+                container.appendChild(createCard());
+                container.appendChild(createCard());
+                return;
+            }
+        }
+
+        // 每15秒重置八卦池
+        setInterval(() => {
+            guas.splice(0, guas.length, 
+                {symbol: "☰", name: "乾"}, {symbol: "☱", name: "兑"},
+                {symbol: "☲", name: "离"}, {symbol: "☳", name: "震"},
+                {symbol: "☴", name: "巽"}, {symbol: "☵", name: "坎"},
+                {symbol: "☶", name: "艮"}, {symbol: "☷", name: "坤"}
+            );
+            document.querySelector('.cards-container').innerHTML = '';
+            initGame();
+        }, 15000);
+
+        initGame();
+    </script>
+</body>
+</html>
