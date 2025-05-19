@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>八卦翻牌游戏</title>
+    <title>易经翻牌游戏</title>
     <style>
         body {
             margin: 0;
@@ -12,20 +12,19 @@
             align-items: center;
             min-height: 100vh;
             background: #1a1a1a;
-            overflow: hidden;
-            font-family: '隶书', cursive;
+            font-family: 'LiSu', '隶书', cursive;
         }
 
-        .cards-container {
+        .container {
             display: flex;
             gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
+            padding: 20px;
         }
 
         .card {
-            width: 150px;
-            height: 250px;
+            width: 80vw;
+            height: 70vh;
+            max-width: 400px;
             perspective: 1000px;
         }
 
@@ -41,7 +40,7 @@
             transform: rotateY(180deg);
         }
 
-        .card-front, .card-back {
+        .card-face {
             position: absolute;
             width: 100%;
             height: 100%;
@@ -55,52 +54,66 @@
             box-sizing: border-box;
         }
 
-        .card-front {
+        .front {
             background: #2c3e50;
-            color: #FFD700;
+            transform: rotateY(0deg);
         }
 
-        .card-back {
+        .back {
             background: #e74c3c;
-            color: white;
             transform: rotateY(180deg);
-            font-family: '楷体', cursive;
-            font-size: 2em;
             writing-mode: vertical-rl;
-            text-orientation: upright;
         }
 
-        .gua-symbol {
-            font-size: 3em;
+        .symbol {
+            font-size: 5rem;
+            color: #FFD700;
             margin-bottom: 10px;
         }
 
-        /* 烟花效果 */
-        .firework {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: transparent;
-            animation: explode 5s ease-out;
+        .gua-name {
+            font-size: 3rem;
+            color: #FFD700;
         }
 
-        @keyframes explode {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(20); opacity: 0; }
+        .name {
+            font-family: 'KaiTi', '楷体', cursive;
+            color: white;
+            font-size: 4rem;
+            text-align: center;
         }
 
-        @keyframes rainbow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        #firework {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <div class="cards-container"></div>
+    <div class="container">
+        <div class="card" onclick="flipCard(this)">
+            <div class="card-inner">
+                <div class="card-face front"></div>
+                <div class="card-face back"></div>
+            </div>
+        </div>
+        <div class="card" onclick="flipCard(this)">
+            <div class="card-inner">
+                <div class="card-face front"></div>
+                <div class="card-face back"></div>
+            </div>
+        </div>
+    </div>
+    <canvas id="firework"></canvas>
 
     <script>
-        const names = ["张馨月","郜一睿","陈奕然","耿梦涵","舒丹乂","周怡辰","张哲铭","袁琳","郑雨蒙","范佳琳","刘宇彤","李森昊","张涵","侯弼元","郑载蓉","王延钰","于洪锦","师小梅","田欣洢","朱志豪","高明蕊","张诗宜","高涵蕾","许惠彭","张凯","贾心悦","王颢伊","何洁","牛竹君","宋莹煊","张益铭","高旭坤","赵玮馨","赵梓含","李宜珊","陈孜慧","马艺瑄","崔建鑫","崔竞文","张沐涵","燕飞宇","吴忆涵","蔡筱鸽","李佳轩","李秉轩","张梦溪","王思懿","孙千惠","吴利阳","张迅嘉","李祉萱","张子扬","齐凌云","刘宁晨","常心慈"];
+        const names = ["王一帆","杨子慧","朱昱颖","甘一博","李宜珂","陈健翔","李秀妍","姜庆意","王之易",
+        "张静茹","卢淑慧","张艺然","马若溪","赵世宽","杜俊冉","徐诗轩","韩慧仪","杨泽萱","李文力",
+        "张佳悦","赵昱然","侯岚","杨希垚","杨雅楠","郭静华","吴一","魏铭涵","李奕萍","徐婧敏","彭子妍",
+        "杨璐璐","苏一梣","步雅凡","朱悦","王曦苒","李晓玉","靳佳怡","王浩博","赵则玮","徐浩森","李彦霏",
+        "刘慧颖","刘亦菲","宋晨","孟卓妍","未兰懿","程晓悦","杨紫","王天宇","宋东洲","张文泷"];
 
         const guas = [
             {symbol: "☰", name: "乾"}, {symbol: "☱", name: "兑"},
@@ -109,77 +122,103 @@
             {symbol: "☶", name: "艮"}, {symbol: "☷", name: "坤"}
         ];
 
-        function createFirework(x, y) {
-            const firework = document.createElement('div');
-            firework.className = 'firework';
-            firework.style.left = x + 'px';
-            firework.style.top = y + 'px';
-            firework.style.background = `radial-gradient(circle, 
-                hsl(${Math.random()*360}, 100%, 50%),
-                hsl(${Math.random()*360}, 100%, 50%),
-                transparent 70%)`;
-            document.body.appendChild(firework);
-            setTimeout(() => firework.remove(), 5000);
+        let usedGuas = [];
+        
+        function getRandomGuas() {
+            if(usedGuas.length >= guas.length) usedGuas = [];
+            const available = guas.filter(g => !usedGuas.includes(g));
+            const selected = [];
+            while(selected.length < 2 && available.length > 0) {
+                const index = Math.floor(Math.random() * available.length);
+                selected.push(available.splice(index, 1)[0]);
+            }
+            usedGuas.push(...selected);
+            return selected;
         }
 
-        function createCard() {
-            const card = document.createElement('div');
-            card.className = 'card';
-            
-            const gua = guas.splice(Math.floor(Math.random()*guas.length), 1)[0];
-            
-            card.innerHTML = `
-                <div class="card-inner">
-                    <div class="card-front">
-                        <div class="gua-symbol">${gua.symbol}</div>
-                        <div>${gua.name}</div>
-                    </div>
-                    <div class="card-back"></div>
-                </div>
-            `;
+        function updateGuas() {
+            const guaPair = getRandomGuas();
+            document.querySelectorAll('.front').forEach((front, index) => {
+                front.innerHTML = `
+                    <div class="symbol">${guaPair[index].symbol}</div>
+                    <div class="gua-name">${guaPair[index].name}</div>
+                `;
+            });
+        }
 
-            card.addEventListener('click', function() {
-                if (this.classList.contains('flipped')) return;
+        function flipCard(card) {
+            if(card.classList.contains('flipped')) return;
+            
+            const back = card.querySelector('.back');
+            back.innerHTML = `<div class="name">${names[Math.floor(Math.random()*names.length)]}</div>`;
+            
+            card.classList.add('flipped');
+            createFirework();
+            
+            setTimeout(() => {
+                card.classList.remove('flipped');
+                updateGuas();
+            }, 5000);
+        }
+
+        // 烟花效果实现
+        const canvas = document.getElementById('firework');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createFirework() {
+            particles = [];
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
+            
+            for(let i = 0; i < 100; i++) { 
+                particles.push({ 
+                    x: canvas.width/2, 
+                    y: canvas.height/2, 
+                    color: colors[Math.floor(Math.random()*colors.length)],
+
+                    radius: Math.random() * 3 + 1, 
+                    vx: (Math.random() - 0.5) * 10, 
+                    vy: (Math.random() - 0.5) * 10, 
+                    alpha: 1 
+                });
+            }
+
+            animate(); 
+        }
+
+        function animate() { 
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            
+            particles.forEach((p, index) => { 
+                p.x += p.vx; 
+                p.y += p.vy; 
+                p.alpha -= 0.01; 
                 
-                this.classList.add('flipped');
-                const rect = this.getBoundingClientRect();
-                createFirework(rect.left + rect.width/2, rect.top + rect.height/2);
+                ctx.beginPath(); 
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); 
+                ctx.fillStyle = p.color; 
+                ctx.globalAlpha = p.alpha; 
+                ctx.fill(); 
                 
-                const back = this.querySelector('.card-back');
-                back.textContent = names[Math.floor(Math.random()*names.length)];
-                
-                setTimeout(() => {
-                    this.classList.remove('flipped');
-                    guas.push(gua);
-                }, 15000);
+                if(p.alpha <= 0) { 
+                    particles.splice(index, 1); 
+                }
             });
 
-            return card;
-        }
-
-        // 初始化游戏
-        function initGame() {
-            const container = document.querySelector('.cards-container');
-            while (guas.length > 0) {
-                container.appendChild(createCard());
-                container.appendChild(createCard());
-                return;
+            if(particles.length > 0) { 
+                requestAnimationFrame(animate); 
             }
         }
 
-        // 每15秒重置八卦池
-        setInterval(() => {
-            guas.splice(0, guas.length, 
-                {symbol: "☰", name: "乾"}, {symbol: "☱", name: "兑"},
-                {symbol: "☲", name: "离"}, {symbol: "☳", name: "震"},
-                {symbol: "☴", name: "巽"}, {symbol: "☵", name: "坎"},
-                {symbol: "☶", name: "艮"}, {symbol: "☷", name: "坤"}
-            );
-            document.querySelector('.cards-container').innerHTML = '';
-            initGame();
-        }, 15000);
-
-        initGame();
-    </script>
-</body>
-</html>
+        window.addEventListener('resize', resizeCanvas); 
+        resizeCanvas(); 
+        updateGuas(); 
+    </script> 
+</body> 
+</html> 
